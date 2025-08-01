@@ -34,10 +34,11 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
   bool isNeon = true;
   double brightness = 1.0;
   Color currentColor = Colors.orangeAccent;
-  List<String> favoriteLabels = ["Fav 1", "Fav 2", "Fav 3"];
+  int selectedColorIndex = 2;
   String? selectedFavorite;
 
-  // Neon shades
+  final List<String> favoriteLabels = ["Fav 1", "Fav 2", "Fav 3"];
+
   final List<Color> neonColors = [
     Colors.blue,
     Colors.red,
@@ -46,19 +47,22 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
     Colors.pink,
   ];
 
-  // Pastel shades
   final List<Color> pastelColors = [
-    const Color(0xFFADD8E6), // pastel blue
-    const Color(0xFFFFC1CC), // pastel red/pink
-    const Color(0xFFFFE5B4), // pastel orange
-    const Color(0xFFB2F2BB), // pastel green
-    const Color(0xFFF8C8DC), // pastel pink
+    const Color(0xFFADD8E6),
+    const Color(0xFFFFC1CC),
+    const Color(0xFFFFE5B4),
+    const Color(0xFFB2F2BB),
+    const Color(0xFFF8C8DC),
   ];
 
-  // Used to track index of selected color
-  int selectedColorIndex = 2; // initially orange
-
   List<Color> get currentColorSet => isNeon ? neonColors : pastelColors;
+
+  // Map to store favorites
+  Map<String, Map<String, dynamic>> savedFavorites = {
+    "Fav 1": {},
+    "Fav 2": {},
+    "Fav 3": {},
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -123,11 +127,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                       onPressed: () {
                         setState(() {
                           isNeon = !isNeon;
-
-                          // switch currentColor to corresponding one in new set
-                          currentColor = isNeon
-                              ? neonColors[selectedColorIndex]
-                              : pastelColors[selectedColorIndex];
+                          currentColor = currentColorSet[selectedColorIndex];
                         });
                       },
                     ),
@@ -146,7 +146,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                         size: 30,
                       ),
                       onPressed: () {
-                        print("Favorite saved!");
+                        _saveToFavoriteDialog();
                       },
                     ),
                   ],
@@ -188,6 +188,36 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
     );
   }
 
+  void _saveToFavoriteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Save to Favorite"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: favoriteLabels.map((label) {
+              return ListTile(
+                title: Text(label),
+                onTap: () {
+                  setState(() {
+                    savedFavorites[label] = {
+                      'isNeon': isNeon,
+                      'colorIndex': selectedColorIndex,
+                      'brightness': brightness,
+                    };
+                    selectedFavorite = label;
+                  });
+                  Navigator.pop(context);
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
   void _showFavoriteDropdown() {
     showModalBottomSheet(
       context: context,
@@ -202,17 +232,37 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
           children: favoriteLabels.map((label) {
             return ListTile(
               title: Text(label, style: const TextStyle(color: Colors.white)),
+              subtitle: savedFavorites[label]?['colorIndex'] != null
+                  ? const Text(
+                      "Tap to load",
+                      style: TextStyle(color: Colors.grey),
+                    )
+                  : const Text(
+                      "Empty",
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
               onTap: () {
                 Navigator.pop(context);
-                setState(() {
-                  selectedFavorite = label;
-                  print("Loaded favorite: $label");
-                });
+                _loadFavorite(label);
               },
             );
           }).toList(),
         );
       },
     );
+  }
+
+  void _loadFavorite(String label) {
+    var fav = savedFavorites[label];
+    if (fav != null && fav['colorIndex'] != null) {
+      setState(() {
+        isNeon = fav['isNeon'];
+        selectedColorIndex = fav['colorIndex'];
+        brightness = fav['brightness'];
+        currentColor = isNeon
+            ? neonColors[selectedColorIndex]
+            : pastelColors[selectedColorIndex];
+      });
+    }
   }
 }
