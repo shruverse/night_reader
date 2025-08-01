@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,9 +11,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // This makes the app go full screen under status bar
+    // Fullscreen, under status bar
     SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(statusBarColor: Colors.transparent),
+      const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
     );
 
     return const MaterialApp(
@@ -31,12 +32,13 @@ class NightReaderScreen extends StatefulWidget {
 
 class _NightReaderScreenState extends State<NightReaderScreen> {
   bool isNeon = true;
+  double brightness = 1.0;
   Color currentColor = Colors.orangeAccent;
   List<String> favoriteLabels = ["Fav 1", "Fav 2", "Fav 3"];
   String? selectedFavorite;
 
-  // These will later be separated for neon/pastel
-  final List<Color> baseColors = [
+  // Neon shades
+  final List<Color> neonColors = [
     Colors.blue,
     Colors.red,
     Colors.orange,
@@ -44,14 +46,61 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
     Colors.pink,
   ];
 
+  // Pastel shades
+  final List<Color> pastelColors = [
+    const Color(0xFFADD8E6), // pastel blue
+    const Color(0xFFFFC1CC), // pastel red/pink
+    const Color(0xFFFFE5B4), // pastel orange
+    const Color(0xFFB2F2BB), // pastel green
+    const Color(0xFFF8C8DC), // pastel pink
+  ];
+
+  // Used to track index of selected color
+  int selectedColorIndex = 2; // initially orange
+
+  List<Color> get currentColorSet => isNeon ? neonColors : pastelColors;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: currentColor,
+      backgroundColor: currentColor.withOpacity(brightness),
       body: Stack(
         children: [
-          // Fullscreen content (blank for now, just color)
-          Positioned.fill(child: Container(color: currentColor)),
+          Positioned.fill(
+            child: Container(color: currentColor.withOpacity(brightness)),
+          ),
+
+          // Circular brightness slider
+          Positioned(
+            bottom: 170,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: SleekCircularSlider(
+                initialValue: brightness * 100,
+                min: 0,
+                max: 100,
+                appearance: CircularSliderAppearance(
+                  angleRange: 360,
+                  size: 160,
+                  customColors: CustomSliderColors(
+                    progressBarColor: Colors.white,
+                    trackColor: Colors.white.withOpacity(0.3),
+                    dotColor: Colors.white,
+                  ),
+                  infoProperties: InfoProperties(
+                    modifier: (double value) => 'Brightness',
+                    mainLabelStyle: const TextStyle(color: Colors.white),
+                  ),
+                ),
+                onChange: (value) {
+                  setState(() {
+                    brightness = value / 100;
+                  });
+                },
+              ),
+            ),
+          ),
 
           // Bottom controls
           Positioned(
@@ -61,7 +110,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Feature icons row
+                // Feature icons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -74,19 +123,21 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                       onPressed: () {
                         setState(() {
                           isNeon = !isNeon;
-                          // Later: update shades based on this
+
+                          // switch currentColor to corresponding one in new set
+                          currentColor = isNeon
+                              ? neonColors[selectedColorIndex]
+                              : pastelColors[selectedColorIndex];
                         });
                       },
                     ),
                     IconButton(
                       icon: const Icon(
-                        Icons.mail, // Envelope
+                        Icons.mail,
                         color: Colors.white,
                         size: 30,
                       ),
-                      onPressed: () {
-                        _showFavoriteDropdown();
-                      },
+                      onPressed: _showFavoriteDropdown,
                     ),
                     IconButton(
                       icon: const Icon(
@@ -95,7 +146,6 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                         size: 30,
                       ),
                       onPressed: () {
-                        // Later: Save current setting as favorite
                         print("Favorite saved!");
                       },
                     ),
@@ -103,17 +153,30 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Color buttons row
+                // Color circles
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: baseColors.map((color) {
+                  children: currentColorSet.asMap().entries.map((entry) {
+                    int index = entry.key;
+                    Color color = entry.value;
                     return GestureDetector(
                       onTap: () {
                         setState(() {
+                          selectedColorIndex = index;
                           currentColor = color;
                         });
                       },
-                      child: CircleAvatar(backgroundColor: color, radius: 20),
+                      child: CircleAvatar(
+                        backgroundColor: color,
+                        radius: 20,
+                        child: selectedColorIndex == index
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 18,
+                              )
+                            : null,
+                      ),
                     );
                   }).toList(),
                 ),
@@ -143,7 +206,6 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                 Navigator.pop(context);
                 setState(() {
                   selectedFavorite = label;
-                  // Later: Load saved setting
                   print("Loaded favorite: $label");
                 });
               },
