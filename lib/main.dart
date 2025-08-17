@@ -182,8 +182,17 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                     dotColor: Colors.white,
                   ),
                   infoProperties: InfoProperties(
-                    modifier: (double value) => 'Brightness',
-                    mainLabelStyle: const TextStyle(color: Colors.white),
+                    topLabelText: 'Brightness',
+                    topLabelStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                    modifier: (double value) => '${value.round()}%',
+                    mainLabelStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 onChange: (value) {
