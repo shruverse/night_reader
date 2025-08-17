@@ -40,6 +40,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
   String? selectedFavorite;
 
   List<String> favoriteLabels = ["Fav 1", "Fav 2", "Fav 3"];
+  final List<String> defaultFavoriteLabels = ["Fav 1", "Fav 2", "Fav 3"];
 
   final List<Color> neonColors = [
     Colors.blue,
@@ -425,9 +426,31 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
             TextButton(
               onPressed: () {
                 setState(() {
+                  // Find the index of the current label
+                  int index = favoriteLabels.indexOf(label);
+
+                  // Clear the favorite data
                   savedFavorites[label] = {};
-                  if (selectedFavorite == label) {
-                    selectedFavorite = null;
+
+                  // Reset the label to default name
+                  if (index != -1 && index < defaultFavoriteLabels.length) {
+                    String defaultLabel = defaultFavoriteLabels[index];
+
+                    // Update the label in the list
+                    favoriteLabels[index] = defaultLabel;
+
+                    // Move the empty data to the new default key
+                    savedFavorites[defaultLabel] = {};
+
+                    // Remove the old custom name key if it's different
+                    if (label != defaultLabel) {
+                      savedFavorites.remove(label);
+                    }
+
+                    // Update selectedFavorite if it matches
+                    if (selectedFavorite == label) {
+                      selectedFavorite = null;
+                    }
                   }
                 });
                 _saveState();
