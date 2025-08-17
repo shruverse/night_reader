@@ -37,7 +37,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
   int selectedColorIndex = 2;
   String? selectedFavorite;
 
-  final List<String> favoriteLabels = ["Fav 1", "Fav 2", "Fav 3"];
+  List<String> favoriteLabels = ["Fav 1", "Fav 2", "Fav 3"];
 
   final List<Color> neonColors = [
     Colors.blue,
@@ -263,32 +263,40 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
           shrinkWrap: true,
           children: favoriteLabels.map((label) {
             bool isEmpty = savedFavorites[label]?['colorIndex'] == null;
-            return ListTile(
-              title: Text(label, style: const TextStyle(color: Colors.white)),
-              subtitle: isEmpty
-                  ? const Text(
-                      "Empty",
-                      style: TextStyle(color: Colors.redAccent),
-                    )
-                  : const Text(
-                      "Tap to load",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-              trailing: isEmpty
-                  ? null
-                  : IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () {
-                        Navigator.pop(context); // Close dropdown first
-                        _deleteFavorite(label);
-                      },
-                    ),
-              onTap: isEmpty
+            return GestureDetector(
+              onLongPress: isEmpty
                   ? null
                   : () {
-                      Navigator.pop(context);
-                      _loadFavorite(label);
+                      Navigator.pop(context); // Close dropdown first
+                      _renameFavorite(label);
                     },
+              child: ListTile(
+                title: Text(label, style: const TextStyle(color: Colors.white)),
+                subtitle: isEmpty
+                    ? const Text(
+                        "Empty",
+                        style: TextStyle(color: Colors.redAccent),
+                      )
+                    : const Text(
+                        "Tap to load • Long press to rename",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                trailing: isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          Navigator.pop(context); // Close dropdown first
+                          _deleteFavorite(label);
+                        },
+                      ),
+                onTap: isEmpty
+                    ? null
+                    : () {
+                        Navigator.pop(context);
+                        _loadFavorite(label);
+                      },
+              ),
             );
           }).toList(),
         );
@@ -342,6 +350,71 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                 );
               },
               child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _renameFavorite(String oldLabel) {
+    TextEditingController controller = TextEditingController(text: oldLabel);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Rename Favorite"),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: "Favorite Name",
+              border: OutlineInputBorder(),
+            ),
+            maxLength: 50,
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                String newLabel = controller.text.trim();
+                if (newLabel.isNotEmpty && newLabel != oldLabel) {
+                  setState(() {
+                    // Update the label in the list
+                    int index = favoriteLabels.indexOf(oldLabel);
+                    if (index != -1) {
+                      favoriteLabels[index] = newLabel;
+                    }
+
+                    // Move the saved data to the new key
+                    savedFavorites[newLabel] = savedFavorites[oldLabel]!;
+                    savedFavorites.remove(oldLabel);
+
+                    // Update selectedFavorite if it matches
+                    if (selectedFavorite == oldLabel) {
+                      selectedFavorite = newLabel;
+                    }
+                  });
+
+                  Navigator.pop(context);
+
+                  // Show confirmation message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Renamed to '$newLabel'"),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                } else {
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text("Rename"),
             ),
           ],
         );
