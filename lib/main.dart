@@ -207,7 +207,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
 
           // Bottom controls
           Positioned(
-            bottom: 20,
+            bottom: 60,
             left: 0,
             right: 0,
             child: Column(
