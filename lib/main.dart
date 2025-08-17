@@ -190,6 +190,33 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
   }
 
   void _saveToFavoriteDialog() {
+    // Only show empty favorite slots
+    List<String> emptySlots = favoriteLabels
+        .where((label) => savedFavorites[label]?['colorIndex'] == null)
+        .toList();
+
+    if (emptySlots.isEmpty) {
+      // Show message if no empty slots
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("No Empty Slots"),
+            content: const Text(
+              "All favorite slots are occupied. Please delete a favorite first to save a new one.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) {
@@ -197,9 +224,13 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
           title: const Text("Save to Favorite"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: favoriteLabels.map((label) {
+            children: emptySlots.map((label) {
               return ListTile(
                 title: Text(label),
+                subtitle: const Text(
+                  "Empty slot",
+                  style: TextStyle(color: Colors.grey),
+                ),
                 onTap: () {
                   setState(() {
                     savedFavorites[label] = {
@@ -231,21 +262,33 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
           padding: const EdgeInsets.all(20),
           shrinkWrap: true,
           children: favoriteLabels.map((label) {
+            bool isEmpty = savedFavorites[label]?['colorIndex'] == null;
             return ListTile(
               title: Text(label, style: const TextStyle(color: Colors.white)),
-              subtitle: savedFavorites[label]?['colorIndex'] != null
+              subtitle: isEmpty
                   ? const Text(
-                      "Tap to load",
-                      style: TextStyle(color: Colors.grey),
-                    )
-                  : const Text(
                       "Empty",
                       style: TextStyle(color: Colors.redAccent),
+                    )
+                  : const Text(
+                      "Tap to load",
+                      style: TextStyle(color: Colors.grey),
                     ),
-              onTap: () {
-                Navigator.pop(context);
-                _loadFavorite(label);
-              },
+              trailing: isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        Navigator.pop(context); // Close dropdown first
+                        _deleteFavorite(label);
+                      },
+                    ),
+              onTap: isEmpty
+                  ? null
+                  : () {
+                      Navigator.pop(context);
+                      _loadFavorite(label);
+                    },
             );
           }).toList(),
         );
@@ -265,5 +308,44 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
             : pastelColors[selectedColorIndex];
       });
     }
+  }
+
+  void _deleteFavorite(String label) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Delete Favorite"),
+          content: Text("Are you sure you want to delete $label?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  savedFavorites[label] = {};
+                  if (selectedFavorite == label) {
+                    selectedFavorite = null;
+                  }
+                });
+                Navigator.pop(context);
+
+                // Show confirmation message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("$label deleted"),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
