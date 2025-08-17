@@ -85,7 +85,8 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                 min: 0,
                 max: 100,
                 appearance: CircularSliderAppearance(
-                  angleRange: 360,
+                  angleRange: 270,
+                  startAngle: 135,
                   size: 160,
                   customColors: CustomSliderColors(
                     progressBarColor: Colors.white,
