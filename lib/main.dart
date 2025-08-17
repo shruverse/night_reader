@@ -38,6 +38,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
   Color currentColor = Colors.orangeAccent;
   int selectedColorIndex = 2;
   String? selectedFavorite;
+  bool isLocked = false;
 
   List<String> favoriteLabels = ["Fav 1", "Fav 2", "Fav 3"];
   final List<String> defaultFavoriteLabels = ["Fav 1", "Fav 2", "Fav 3"];
@@ -82,6 +83,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
       final loadedBrightness = prefs.getDouble('brightness') ?? 1.0;
       final loadedSelectedColorIndex = prefs.getInt('selectedColorIndex') ?? 2;
       final loadedSelectedFavorite = prefs.getString('selectedFavorite');
+      final loadedIsLocked = prefs.getBool('isLocked') ?? false;
 
       // Load favorite labels
       List<String>? savedLabels = prefs.getStringList('favoriteLabels');
@@ -114,6 +116,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
           brightness = loadedBrightness;
           selectedColorIndex = loadedSelectedColorIndex;
           selectedFavorite = loadedSelectedFavorite;
+          isLocked = loadedIsLocked;
           favoriteLabels = loadedFavoriteLabels;
           savedFavorites = loadedSavedFavorites;
 
@@ -135,6 +138,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
       await prefs.setBool('isNeon', isNeon);
       await prefs.setDouble('brightness', brightness);
       await prefs.setInt('selectedColorIndex', selectedColorIndex);
+      await prefs.setBool('isLocked', isLocked);
       if (selectedFavorite != null) {
         await prefs.setString('selectedFavorite', selectedFavorite!);
       } else {
@@ -162,128 +166,149 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
             child: Container(color: currentColor.withValues(alpha: brightness)),
           ),
 
-          // Circular brightness slider
+          // Lock/Unlock button in top-right corner
           Positioned(
-            bottom: 170,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: SleekCircularSlider(
-                initialValue: brightness * 100,
-                min: 0,
-                max: 100,
-                appearance: CircularSliderAppearance(
-                  angleRange: 270,
-                  startAngle: 135,
-                  size: 160,
-                  customColors: CustomSliderColors(
-                    progressBarColor: Colors.white,
-                    trackColor: Colors.white.withValues(alpha: 0.3),
-                    dotColor: Colors.white,
-                  ),
-                  infoProperties: InfoProperties(
-                    topLabelText: 'Brightness',
-                    topLabelStyle: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+            top: 50,
+            right: 20,
+            child: IconButton(
+              icon: Icon(
+                isLocked ? Icons.lock : Icons.lock_open,
+                color: Colors.white,
+                size: 30,
+              ),
+              onPressed: () {
+                setState(() {
+                  isLocked = !isLocked;
+                });
+                _saveState();
+              },
+            ),
+          ),
+
+          // Circular brightness slider (only show when not locked)
+          if (!isLocked)
+            Positioned(
+              bottom: 170,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: SleekCircularSlider(
+                  initialValue: brightness * 100,
+                  min: 0,
+                  max: 100,
+                  appearance: CircularSliderAppearance(
+                    angleRange: 270,
+                    startAngle: 135,
+                    size: 160,
+                    customColors: CustomSliderColors(
+                      progressBarColor: Colors.white,
+                      trackColor: Colors.white.withValues(alpha: 0.3),
+                      dotColor: Colors.white,
                     ),
-                    modifier: (double value) => '${value.round()}%',
-                    mainLabelStyle: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
+                    infoProperties: InfoProperties(
+                      topLabelText: 'Brightness',
+                      topLabelStyle: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                      modifier: (double value) => '${value.round()}%',
+                      mainLabelStyle: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
+                  onChange: (value) {
+                    setState(() {
+                      brightness = value / 100;
+                    });
+                    _saveState();
+                  },
                 ),
-                onChange: (value) {
-                  setState(() {
-                    brightness = value / 100;
-                  });
-                  _saveState();
-                },
               ),
             ),
-          ),
 
-          // Bottom controls
-          Positioned(
-            bottom: 60,
-            left: 0,
-            right: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Feature icons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        isNeon ? Icons.wb_sunny : Icons.nightlight_round,
-                        color: Colors.white,
-                        size: 30,
+          // Bottom controls (only show when not locked)
+          if (!isLocked)
+            Positioned(
+              bottom: 60,
+              left: 0,
+              right: 0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Feature icons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          isNeon ? Icons.wb_sunny : Icons.nightlight_round,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            isNeon = !isNeon;
+                            currentColor = currentColorSet[selectedColorIndex];
+                          });
+                          _saveState();
+                        },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          isNeon = !isNeon;
-                          currentColor = currentColorSet[selectedColorIndex];
-                        });
-                        _saveState();
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.mail,
-                        color: Colors.white,
-                        size: 30,
+                      IconButton(
+                        icon: const Icon(
+                          Icons.mail,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                        onPressed: _showFavoriteDropdown,
                       ),
-                      onPressed: _showFavoriteDropdown,
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.favorite,
-                        color: Colors.white,
-                        size: 30,
+                      IconButton(
+                        icon: const Icon(
+                          Icons.favorite,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                        onPressed: () {
+                          _saveToFavoriteDialog();
+                        },
                       ),
-                      onPressed: () {
-                        _saveToFavoriteDialog();
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
 
-                // Color circles
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: currentColorSet.asMap().entries.map((entry) {
-                    int index = entry.key;
-                    Color color = entry.value;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedColorIndex = index;
-                          currentColor = color;
-                        });
-                        _saveState();
-                      },
-                      child: CircleAvatar(
-                        backgroundColor: color,
-                        radius: 20,
-                        child: selectedColorIndex == index
-                            ? const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 18,
-                              )
-                            : null,
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
+                  // Color circles
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: currentColorSet.asMap().entries.map((entry) {
+                      int index = entry.key;
+                      Color color = entry.value;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedColorIndex = index;
+                            currentColor = color;
+                          });
+                          _saveState();
+                        },
+                        child: CircleAvatar(
+                          backgroundColor: color,
+                          radius: 20,
+                          child: selectedColorIndex == index
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 18,
+                                )
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
