@@ -13,14 +13,12 @@ A simple and elegant night reader application built with Flutter. This app allow
 *   **State Persistence:** Your settings are saved and will be remembered the next time you open the app.
 
 ## Screenshots
-<img width="1754" height="1754" alt="app icon" src="https://github.com/user-attachments/assets/0202dbb2-84bd-4b88-97d1-72997c3efe44" />
-![Screenshot_20250817_192524](https://github.com/user-attachments/assets/e8b33928-858d-4633-8575-2b13def8676c)
-![Screenshot_20250817_192625](https://github.com/user-attachments/assets/ed3e1b19-342c-4675-add2-70b97e008be5)
-![Screenshot_20250817_192614](https://github.com/user-attachments/assets/2fd5813f-864d-44c3-a548-72586536b991)
-![Screenshot_20250817_192607](https://github.com/user-attachments/assets/b90b200c-76f9-4149-994e-d3a3fee7094d)
-![Screenshot_20250817_192539](https://github.com/user-attachments/assets/0de1bb24-79d4-42d8-9639-d1e35d84f858)
-
-
+<img height="400" src="https://github.com/user-attachments/assets/2a331d31-04e5-4e63-b54e-e5967964a115">
+<img height="400" src="https://github.com/user-attachments/assets/d519804b-6abc-4c35-ba48-4a5627f34e66">
+<img height="400" src="https://github.com/user-attachments/assets/96878139-96b1-404b-9bb0-4a908dd90c19">
+<img height="400" src="https://github.com/user-attachments/assets/cb4e4499-57aa-401d-a019-6f543a439e21">
+<img height="400" src="https://github.com/user-attachments/assets/f9f836e1-cc06-446b-955b-5e5199eb30ec">
+<img width="144" height="144" alt="ic_launcher" src="https://github.com/user-attachments/assets/1e0cd5de-2cb1-4746-92ed-f2b6a60d87fa" />
 
 ## Getting Started
 
