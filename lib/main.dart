@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 void main() {
   runApp(const MyApp());
@@ -65,13 +67,98 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _loadState();
+  }
+
+  Future<void> _loadState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Load basic state
+      final loadedIsNeon = prefs.getBool('isNeon') ?? true;
+      final loadedBrightness = prefs.getDouble('brightness') ?? 1.0;
+      final loadedSelectedColorIndex = prefs.getInt('selectedColorIndex') ?? 2;
+      final loadedSelectedFavorite = prefs.getString('selectedFavorite');
+
+      // Load favorite labels
+      List<String>? savedLabels = prefs.getStringList('favoriteLabels');
+      final loadedFavoriteLabels = savedLabels ?? ["Fav 1", "Fav 2", "Fav 3"];
+
+      // Load saved favorites
+      Map<String, Map<String, dynamic>> loadedSavedFavorites = {
+        "Fav 1": {},
+        "Fav 2": {},
+        "Fav 3": {},
+      };
+
+      String? favoritesJson = prefs.getString('savedFavorites');
+      if (favoritesJson != null) {
+        try {
+          Map<String, dynamic> decoded = jsonDecode(favoritesJson);
+          loadedSavedFavorites = decoded.map(
+            (key, value) => MapEntry(key, Map<String, dynamic>.from(value)),
+          );
+        } catch (e) {
+          // If JSON parsing fails, use default values
+          debugPrint('Error parsing saved favorites: $e');
+        }
+      }
+
+      // Update state safely
+      if (mounted) {
+        setState(() {
+          isNeon = loadedIsNeon;
+          brightness = loadedBrightness;
+          selectedColorIndex = loadedSelectedColorIndex;
+          selectedFavorite = loadedSelectedFavorite;
+          favoriteLabels = loadedFavoriteLabels;
+          savedFavorites = loadedSavedFavorites;
+
+          // Set current color based on loaded state
+          currentColor = currentColorSet[selectedColorIndex];
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading state: $e');
+      // Continue with default values if loading fails
+    }
+  }
+
+  Future<void> _saveState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Save basic state
+      await prefs.setBool('isNeon', isNeon);
+      await prefs.setDouble('brightness', brightness);
+      await prefs.setInt('selectedColorIndex', selectedColorIndex);
+      if (selectedFavorite != null) {
+        await prefs.setString('selectedFavorite', selectedFavorite!);
+      } else {
+        await prefs.remove('selectedFavorite');
+      }
+
+      // Save favorite labels
+      await prefs.setStringList('favoriteLabels', favoriteLabels);
+
+      // Save favorites as JSON
+      String favoritesJson = jsonEncode(savedFavorites);
+      await prefs.setString('savedFavorites', favoritesJson);
+    } catch (e) {
+      debugPrint('Error saving state: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: currentColor.withOpacity(brightness),
+      backgroundColor: currentColor.withValues(alpha: brightness),
       body: Stack(
         children: [
           Positioned.fill(
-            child: Container(color: currentColor.withOpacity(brightness)),
+            child: Container(color: currentColor.withValues(alpha: brightness)),
           ),
 
           // Circular brightness slider
@@ -90,7 +177,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                   size: 160,
                   customColors: CustomSliderColors(
                     progressBarColor: Colors.white,
-                    trackColor: Colors.white.withOpacity(0.3),
+                    trackColor: Colors.white.withValues(alpha: 0.3),
                     dotColor: Colors.white,
                   ),
                   infoProperties: InfoProperties(
@@ -102,6 +189,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                   setState(() {
                     brightness = value / 100;
                   });
+                  _saveState();
                 },
               ),
             ),
@@ -130,6 +218,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                           isNeon = !isNeon;
                           currentColor = currentColorSet[selectedColorIndex];
                         });
+                        _saveState();
                       },
                     ),
                     IconButton(
@@ -166,6 +255,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                           selectedColorIndex = index;
                           currentColor = color;
                         });
+                        _saveState();
                       },
                       child: CircleAvatar(
                         backgroundColor: color,
@@ -240,6 +330,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                     };
                     selectedFavorite = label;
                   });
+                  _saveState();
                   Navigator.pop(context);
                 },
               );
@@ -315,6 +406,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
             ? neonColors[selectedColorIndex]
             : pastelColors[selectedColorIndex];
       });
+      _saveState();
     }
   }
 
@@ -338,6 +430,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                     selectedFavorite = null;
                   }
                 });
+                _saveState();
                 Navigator.pop(context);
 
                 // Show confirmation message
@@ -399,6 +492,7 @@ class _NightReaderScreenState extends State<NightReaderScreen> {
                       selectedFavorite = newLabel;
                     }
                   });
+                  _saveState();
 
                   Navigator.pop(context);
 
