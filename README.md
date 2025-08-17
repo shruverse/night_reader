@@ -13,8 +13,14 @@ A simple and elegant night reader application built with Flutter. This app allow
 *   **State Persistence:** Your settings are saved and will be remembered the next time you open the app.
 
 ## Screenshots
+<img width="1754" height="1754" alt="app icon" src="https://github.com/user-attachments/assets/0202dbb2-84bd-4b88-97d1-72997c3efe44" />
+![Screenshot_20250817_192524](https://github.com/user-attachments/assets/e8b33928-858d-4633-8575-2b13def8676c)
+![Screenshot_20250817_192625](https://github.com/user-attachments/assets/ed3e1b19-342c-4675-add2-70b97e008be5)
+![Screenshot_20250817_192614](https://github.com/user-attachments/assets/2fd5813f-864d-44c3-a548-72586536b991)
+![Screenshot_20250817_192607](https://github.com/user-attachments/assets/b90b200c-76f9-4149-994e-d3a3fee7094d)
+![Screenshot_20250817_192539](https://github.com/user-attachments/assets/0de1bb24-79d4-42d8-9639-d1e35d84f858)
 
-*(Add your screenshots here)*
+
 
 ## Getting Started
 
